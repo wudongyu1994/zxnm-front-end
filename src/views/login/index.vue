@@ -48,13 +48,18 @@
         <span> password: any</span>
       </div>
 
+      <el-button @click="test1">test1</el-button>
+      <el-button @click="test2">test2</el-button>
+      <el-button @click="test3">test3</el-button>
+
     </el-form>
   </div>
 </template>
 
 <script>
 import { validUsername } from '@/utils/validate'
-
+import { test1, test2, test3 } from '@/api/user'
+import qs from 'qs'
 export default {
   name: 'Login',
   data() {
@@ -120,6 +125,36 @@ export default {
           return false
         }
       })
+    },
+    test1() {
+      const that = this
+      test1()
+        .then(function(response) {
+          that.$message.success(response.msg)
+        })
+        .catch(function(error) {
+          that.$message.error(error)
+        })
+    },
+    test2() {
+      const that = this
+      test2(qs.stringify({ username: 'admin', password: '1234' }))
+        .then(response => {
+          that.$message.success(response.msg)
+        })
+        .catch(function(error) {
+          that.$message.error(error)
+        })
+    },
+    test3() {
+      const that = this
+      test3(qs.stringify({ username: 'admin', password: '1234' }))
+        .then(response => {
+          that.$message.success(response.msg)
+        })
+        .catch(function(error) {
+          that.$message.error(error.msg)
+        })
     }
   }
 }

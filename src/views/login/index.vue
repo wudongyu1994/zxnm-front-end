@@ -48,9 +48,9 @@
         <span> password: any</span>
       </div>
 
-      <el-button @click="test1">test1</el-button>
-      <el-button @click="test2">test2</el-button>
-      <el-button @click="test3">test3</el-button>
+      <el-button @click="test1">test1-hello</el-button>
+      <el-button @click="test2">test2-test</el-button>
+      <el-button @click="test3">test3-login</el-button>
 
     </el-form>
   </div>
@@ -58,8 +58,8 @@
 
 <script>
 import { validUsername } from '@/utils/validate'
-import { test1, test2, test3 } from '@/api/user'
-import qs from 'qs'
+import { test1, test2 } from '../../api/user'
+import { login } from '@/api/auth'
 export default {
   name: 'Login',
   data() {
@@ -71,7 +71,7 @@ export default {
       }
     }
     const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
+      if (value.length < 4) {
         callback(new Error('The password can not be less than 6 digits'))
       } else {
         callback()
@@ -80,7 +80,7 @@ export default {
     return {
       loginForm: {
         username: 'admin',
-        password: '111111'
+        password: '1234'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -114,8 +114,8 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
+          this.$store.dispatch('auth/login', this.loginForm).then(() => {
+            this.$router.push({ path: '/' })
             this.loading = false
           }).catch(() => {
             this.loading = false
@@ -138,7 +138,7 @@ export default {
     },
     test2() {
       const that = this
-      test2(qs.stringify({ username: 'admin', password: '1234' }))
+      test2({ username: 'admin', password: '1234' })
         .then(response => {
           that.$message.success(response.msg)
         })
@@ -148,7 +148,7 @@ export default {
     },
     test3() {
       const that = this
-      test3(qs.stringify({ username: 'admin', password: '1234' }))
+      login({ username: 'admin', password: '1234' })
         .then(response => {
           that.$message.success(response.msg)
         })

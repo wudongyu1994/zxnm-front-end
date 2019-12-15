@@ -43,48 +43,33 @@
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
-      </div>
-
-      <el-button @click="test1">test1-hello</el-button>
-      <el-button @click="test2">test2-test</el-button>
-      <el-button @click="test3">test3-login</el-button>
+      <!--      <el-button @click="test1">test1-hello</el-button>-->
+      <!--      <el-button @click="test2">test2-test</el-button>-->
+      <!--      <el-button @click="test3">test3-login</el-button>-->
 
     </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
-import { test1, test2 } from '../../api/user'
-import { login } from '@/api/auth'
+import { asyncRoutes } from '../../router'
+import { filterAsyncRoutes } from '../../store/modules/permission'
+// import { test1, test2 } from '../../api/user'
+// import { login } from '@/api/auth'
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
-      } else {
-        callback()
-      }
-    }
-    const validatePassword = (rule, value, callback) => {
-      if (value.length < 4) {
-        callback(new Error('The password can not be less than 6 digits'))
-      } else {
-        callback()
-      }
-    }
     return {
       loginForm: {
         username: 'admin',
         password: '1234'
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        username: [{ required: true, trigger: 'blur', message: '请输入用户名！' }],
+        password: [
+          { required: true, trigger: 'blur', message: '请输入密码！' },
+          { min: 4, trigger: 'blur', message: '密码长度至少4字节' }
+        ]
       },
       loading: false,
       passwordType: 'password',
@@ -127,34 +112,15 @@ export default {
       })
     },
     test1() {
-      const that = this
-      test1()
-        .then(function(response) {
-          that.$message.success(response.msg)
-        })
-        .catch(function(error) {
-          that.$message.error(error)
-        })
+      const auth = ['/test', '/hello', '/user']
+      const accessedRoutes = filterAsyncRoutes(asyncRoutes, auth)
+      console.log(accessedRoutes)
     },
     test2() {
-      const that = this
-      test2({ username: 'admin', password: '1234' })
-        .then(response => {
-          that.$message.success(response.msg)
-        })
-        .catch(function(error) {
-          that.$message.error(error)
-        })
+
     },
     test3() {
-      const that = this
-      login({ username: 'admin', password: '1234' })
-        .then(response => {
-          that.$message.success(response.msg)
-        })
-        .catch(function(error) {
-          that.$message.error(error.msg)
-        })
+
     }
   }
 }

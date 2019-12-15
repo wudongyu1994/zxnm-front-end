@@ -1,21 +1,29 @@
 import { login, logout, getAuth } from '@/api/auth'
-import { resetRouter } from '@/router'
+import router, { resetRouter } from '@/router'
+import store from '@/store'
+import { Message } from 'element-ui'
 
 const state = {
   authorities: [],
   name: '',
-  principal: null
+  principal: null,
+  hasAddRoutes: false
 }
 
 const mutations = {
-  SET_AUTH: (state, auth) => {
-    state.authorities = auth
+  SET_AUTH: (state, auths) => {
+    let ret = []
+    auths.forEach(auth => { ret = ret.concat(auth.authority) })
+    state.authorities = ret
   },
   SET_NAME: (state, name) => {
     state.name = name
   },
   SET_PRINCIPAL: (state, principal) => {
     state.principal = principal
+  },
+  SET_HASADDROUTES: (state, flag) => {
+    state.hasAddRoutes = flag
   }
 }
 
@@ -23,16 +31,28 @@ const actions = {
   // user login
   login({ commit }, userInfo) {
     const { username, password } = userInfo
-    return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
-        const { data } = response
-        commit('SET_AUTH', data.authorities)
-        commit('SET_NAME', data.name)
-        commit('SET_PRINCIPAL', data.principal)
-        resolve()
-      }).catch(error => {
-        reject(error)
-      })
+    return new Promise(async(resolve, reject) => {
+      login({ username: username.trim(), password: password })
+        .then(response => {
+          const { data } = response
+          commit('SET_AUTH', data.authorities)
+          commit('SET_NAME', data.name)
+          commit('SET_PRINCIPAL', data.principal)
+          store.dispatch('permission/generateRoutes', store.getters.authorities)
+            .then(response => {
+            // dynamically add accessible routes
+              router.addRoutes(response)
+              commit('SET_HASADDROUTES', true)
+            })
+            .catch(error => {
+              Message.error(error)
+              commit('SET_HASADDROUTES', false)
+            })
+          resolve()
+        })
+        .catch(error => {
+          reject(error)
+        })
     })
   },
 
@@ -61,6 +81,7 @@ const actions = {
         commit('SET_AUTH', [])
         commit('SET_NAME', '')
         commit('SET_PRINCIPAL', null)
+        commit('SET_HASADDROUTES', false)
         resetRouter()
         resolve()
       }).catch(error => {
@@ -75,6 +96,7 @@ const actions = {
       commit('SET_AUTH', [])
       commit('SET_NAME', '')
       commit('SET_PRINCIPAL', null)
+      commit('SET_HASADDROUTES', false)
       resolve()
     })
   }

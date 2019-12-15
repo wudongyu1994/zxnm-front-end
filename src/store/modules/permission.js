@@ -5,9 +5,9 @@ import { asyncRoutes, constantRoutes } from '@/router'
  * @param auth
  * @param route
  */
-function hasPermission(auth, route) {
+export function hasPermission(auth, route) {
   if (route.meta && route.meta.permissions) {
-    return route.meta.permissions.every(per => auth.include(per))
+    return route.meta.permissions.every(per => auth.includes(per))
   } else {
     return true
   }
@@ -48,6 +48,7 @@ const actions = {
   generateRoutes({ commit }, auth) {
     return new Promise(resolve => {
       const accessedRoutes = filterAsyncRoutes(asyncRoutes, auth)
+      debugger
       commit('SET_ROUTES', accessedRoutes)
       resolve(accessedRoutes)
     })

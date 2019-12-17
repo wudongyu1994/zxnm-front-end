@@ -46,7 +46,7 @@ export const constantRoutes = [
   {
     path: '/',
     component: Layout,
-    // redirect: '/dashboard',
+    redirect: '/dashboard',
     children: [{
       path: 'dashboard',
       name: 'Dashboard',
@@ -112,6 +112,22 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
   {
+    path: '/user',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'User',
+        component: () => import('@/views/user/index'),
+        meta: {
+          title: 'User',
+          icon: 'form',
+          permissions: ['/user']
+        }
+      }
+    ]
+  },
+  {
     path: '/hello',
     component: Layout,
     children: [
@@ -139,22 +155,6 @@ export const asyncRoutes = [
           title: 'Test',
           icon: 'form',
           permissions: ['/test']
-        }
-      }
-    ]
-  },
-  {
-    path: '/user',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'User',
-        component: () => import('@/views/dashboard/index'),
-        meta: {
-          title: 'User',
-          icon: 'form',
-          permissions: ['/user']
         }
       }
     ]

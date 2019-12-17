@@ -10,7 +10,6 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 const whiteList = ['/login'] // no redirect whitelist
 
 router.beforeEach(async(to, from, next) => {
-  debugger
   // start progress bar
   NProgress.start()
   // set page title
@@ -34,7 +33,6 @@ router.beforeEach(async(to, from, next) => {
           // set the replace: true, so the navigation will not leave a history record
           next({ ...to, replace: true })
         } catch (error) {
-          debugger
           // remove token and go to login page to re-login
           await store.dispatch('auth/resetAuth')
           Message.error(error || 'Has Error')
@@ -44,7 +42,6 @@ router.beforeEach(async(to, from, next) => {
       }
     }
   } else {
-    debugger
     /* has no auth*/
     if (whiteList.indexOf(to.path) !== -1) {
       // in the free login whitelist, go directly

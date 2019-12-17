@@ -13,7 +13,7 @@
     <el-table
       :key="tableKey"
       v-loading="listLoading"
-      :data="list"
+      :data="UserList"
       border
       fit
       highlight-current-row
@@ -61,22 +61,28 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="Role" align="center" width="80">
+        <template slot-scope="{row: {roleName}}">
+          <span>{{ roleName }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
-          <el-button type="primary" size="mini" @click="handleUpdate(row)">
+          <el-button type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
             Edit
           </el-button>
-          <el-button size="mini" type="danger" @click="handleModifyStatus(row,'deleted')">
+          <el-button size="mini" type="danger" icon="el-icon-delete" @click="handleDelete(row)">
             Delete
           </el-button>
         </template>
       </el-table-column>
+
     </el-table>
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getUser" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="70px" style="width: 400px; margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="Id" prop="id">
           {{ temp.id }}
         </el-form-item>
@@ -92,7 +98,7 @@
         </el-form-item>
         <el-form-item label="Sex" prop="sex">
           <el-select v-model="temp.sex" class="filter-item" placeholder="Please select">
-            <el-option v-for="{index, item} in sexEnum" :key="index" :label="item" :value="index" />
+            <el-option v-for="(item, index) in sexEnum" :key="index" :label="item" :value="index" />
           </el-select>
         </el-form-item>
         <el-form-item label="Corp" prop="corp">
@@ -106,7 +112,12 @@
         </el-form-item>
         <el-form-item label="Status" prop="status">
           <el-select v-model="temp.status" class="filter-item" placeholder="Please select">
-            <el-option v-for="{index, item} in statusEnum" :key="index" :label="item" :value="index" />
+            <el-option v-for="(item, index) in statusEnum" :key="index" :label="item" :value="index" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Role" prop="role">
+          <el-select v-model="temp.roleId" class="filter-item" placeholder="Please select">
+            <el-option v-for="role in roleList" :key="role.id" :label="role.name" :value="role.id" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -124,7 +135,9 @@
 </template>
 
 <script>
-import { getUserByPage, createUser, updateUser } from '../../api/user'
+import { getUserByPage, createUser, updateUser, deleteUser } from '../../api/user'
+import { getAllRole } from '../../api/role'
+import { getRole2UserByUserId } from '../../api/role2user'
 import Pagination from '../../components/Pagination' // secondary package based on el-pagination
 
 export default {
@@ -156,7 +169,8 @@ export default {
         create: 'Create'
       },
       tableKey: 0,
-      list: null,
+      UserList: null,
+      roleList: null,
       total: 0,
       listLoading: true,
       listQuery: {
@@ -166,14 +180,17 @@ export default {
       },
       temp: {
         id: undefined,
+        createTime: new Date(),
+        updateTime: new Date(),
         name: '',
         username: '',
         password: '',
         corp: '',
-        sex: 0,
+        sex: undefined,
         phone: '',
         email: '',
-        status: 0
+        status: undefined,
+        roleId: undefined
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -187,15 +204,34 @@ export default {
     }
   },
   created() {
+    this.getRole()
     this.getUser()
   },
   methods: {
     getUser() {
       this.listLoading = true
       getUserByPage(this.listQuery).then(response => {
-        this.list = response.data
+        this.UserList = response.data
         this.total = response.count
-        this.listLoading = false
+        this.UserList.forEach((user, index) => {
+          getRole2UserByUserId(user.id).then(response => {
+            if (response.data !== null) {
+              user.roleId = response.data.roleId
+              user.roleName = this.roleList.find(role => role.id === user.roleId).name.substring(5)
+            }
+            console.log(index)
+            if (index === this.UserList.length - 1) {
+              console.log('false')
+              this.listLoading = false
+            }
+          })
+        })
+      })
+    },
+    getRole() {
+      this.listLoading = true
+      getAllRole().then(response => {
+        this.roleList = response.data
       })
     },
     handleFilter() {
@@ -205,14 +241,17 @@ export default {
     resetTemp() {
       this.temp = {
         id: undefined,
+        createTime: new Date(),
+        updateTime: new Date(),
         name: '',
         username: '',
         password: '',
         corp: '',
-        sex: 0,
+        sex: undefined,
         phone: '',
         email: '',
-        status: 0
+        status: undefined,
+        roleId: undefined
       }
     },
     handleCreate() {
@@ -223,12 +262,36 @@ export default {
         this.$refs['dataForm'].clearValidate()
       })
     },
+    handleUpdate(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    handleDelete(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      deleteUser(this.temp.id).then(() => {
+        for (const v of this.UserList) {
+          if (v.id === this.temp.id) {
+            this.UserList.splice(this.UserList.indexOf(v), 1)
+            break
+          }
+        }
+        this.total--
+        this.$message.success('Delete successfully!')
+      })
+    },
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
+          this.temp.createTime = new Date().getTime()
+          this.temp.updateTime = this.temp.createTime
           createUser(this.temp).then(() => {
-            this.list.unshift(this.temp)// 镜像函数 list.push(), unshift()方法可向数组的开头添加一个或更多元素,
+            this.UserList.unshift(this.temp)// 镜像函数 list.push(), unshift()方法可向数组的开头添加一个或更多元素,
             this.dialogFormVisible = false
+            this.total++
             this.$message.success('Create successfully!')
           })
         }
@@ -239,10 +302,10 @@ export default {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
           updateUser(tempData).then(() => {
-            for (const v of this.list) {
+            for (const v of this.UserList) {
               if (v.id === this.temp.id) {
-                const index = this.list.indexOf(v)
-                this.list.splice(index, 1, tempData)
+                const index = this.UserList.indexOf(v)
+                this.UserList.splice(index, 1, tempData)
                 break
               }
             }

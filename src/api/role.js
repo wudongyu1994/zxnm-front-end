@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+export function getAllRole() {
+  return request({
+    url: '/role',
+    method: 'get'
+  })
+}
+
+/*
 export function getUserByPage(query) {
   return request({
     url: '/user',
@@ -27,3 +35,4 @@ export function deleteUser(id) {
     method: 'delete'
   })
 }
+*/

@@ -15,7 +15,7 @@ router.beforeEach(async(to, from, next) => {
   // set page title
   document.title = getPageTitle(to.meta.title)
   const hasAuth = store.getters.authorities
-  hasAuth.forEach(auth => { console.log(auth) })
+  // hasAuth.forEach(auth => { console.log(auth) })
   // next()
   // determine whether the user has logged in
   if (hasAuth.length > 0) {

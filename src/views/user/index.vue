@@ -298,6 +298,8 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
+          this.temp.updateTime = new Date().getTime()
+          this.temp.listRoleId = this.listCheck
           const tempData = Object.assign({}, this.temp)
           updateUser(tempData).then(() => {
             for (const v of this.UserList) {

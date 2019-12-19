@@ -1,17 +1,18 @@
 import request from '@/utils/request'
+import qs from 'qs'
 
-export function getUserByPage(query) {
+export function getUserByPage(pageSetting) {
   return request({
     url: '/user',
     method: 'get',
-    param: query
+    params: pageSetting
   })
 }
 export function createUser(data) {
   return request({
     url: '/user',
     method: 'post',
-    data
+    data: qs.stringify(data)
   })
 }
 export function updateUser(data) {

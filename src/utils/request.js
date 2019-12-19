@@ -42,8 +42,8 @@ service.interceptors.response.use(
     }
   },
   error => {
-    console.log('err:' + error) // for debug
-    Message.error(error.msg)
+    console.log('err===>' + error) // for debug
+    Message.error(error.message)
     return Promise.reject(error)
   }
 )

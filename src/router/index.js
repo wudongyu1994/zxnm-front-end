@@ -121,7 +121,7 @@ export const asyncRoutes = [
         component: () => import('@/views/user/index'),
         meta: {
           title: 'User',
-          icon: 'form',
+          icon: 'peoples',
           permissions: ['/user']
         }
       }

@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.title" placeholder="Username" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="pageSetting.title" placeholder="coming soon" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         Search
       </el-button>
@@ -54,16 +54,16 @@
           <span>{{ email }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Status" align="center" width="150">
+      <el-table-column label="Status" align="center" width="80">
         <template slot-scope="{row: {status}}">
           <el-tag :type="statusEnum[status] | statusFilter">
             {{ statusEnum[status] }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Role" align="center" width="80">
-        <template slot-scope="{row: {roleName}}">
-          <span>{{ roleName }}</span>
+      <el-table-column label="Role" align="center" width="150">
+        <template slot-scope="{row: {roleList}}">
+          <el-tag v-for="role in roleList" :key="role.id">{{ role.name }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
@@ -79,7 +79,7 @@
 
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getUser" />
+    <pagination v-show="total>0" :total="total" :page.sync="pageSetting.page" :limit.sync="pageSetting.size" @pagination="getUser" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
@@ -116,8 +116,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="Role" prop="role">
-          <el-select v-model="temp.roleId" class="filter-item" placeholder="Please select">
-            <el-option v-for="role in roleList" :key="role.id" :label="role.name" :value="role.id" />
+          <el-select v-model="listCheck" multiple placeholder="please choose roles" @change="handleCheckedRoleChange">
+            <el-option v-for="role in roleListAll" :key="role.id" :label="role.name" :value="role.id" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -137,8 +137,8 @@
 <script>
 import { getUserByPage, createUser, updateUser, deleteUser } from '../../api/user'
 import { getAllRole } from '../../api/role'
-import { getRole2UserByUserId } from '../../api/role2user'
-import Pagination from '../../components/Pagination' // secondary package based on el-pagination
+import Pagination from '../../components/Pagination'
+import { MessageBox } from 'element-ui'
 
 export default {
   name: 'ComplexTable',
@@ -170,13 +170,13 @@ export default {
       },
       tableKey: 0,
       UserList: null,
-      roleList: null,
+      roleListAll: null,
+      listCheck: [],
       total: 0,
       listLoading: true,
-      listQuery: {
+      pageSetting: {
         page: 1,
-        limit: 10,
-        username: undefined
+        size: 10
       },
       temp: {
         id: undefined,
@@ -190,7 +190,8 @@ export default {
         phone: '',
         email: '',
         status: undefined,
-        roleId: undefined
+        roleList: [],
+        listRoleId: []
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -210,32 +211,20 @@ export default {
   methods: {
     getUser() {
       this.listLoading = true
-      getUserByPage(this.listQuery).then(response => {
+      getUserByPage(this.pageSetting).then(response => {
         this.UserList = response.data
         this.total = response.count
-        this.UserList.forEach((user, index) => {
-          getRole2UserByUserId(user.id).then(response => {
-            if (response.data !== null) {
-              user.roleId = response.data.roleId
-              user.roleName = this.roleList.find(role => role.id === user.roleId).name.substring(5)
-            }
-            console.log(index)
-            if (index === this.UserList.length - 1) {
-              console.log('false')
-              this.listLoading = false
-            }
-          })
-        })
+        this.listLoading = false
       })
     },
     getRole() {
       this.listLoading = true
       getAllRole().then(response => {
-        this.roleList = response.data
+        this.roleListAll = response.data
       })
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.pageSetting.page = 1
       this.getUser()
     },
     resetTemp() {
@@ -254,6 +243,9 @@ export default {
         roleId: undefined
       }
     },
+    handleCheckedRoleChange() {
+      console.info(this.listCheck)
+    },
     handleCreate() {
       this.resetTemp()
       this.dialogStatus = 'create'
@@ -271,16 +263,22 @@ export default {
       })
     },
     handleDelete(row) {
-      this.temp = Object.assign({}, row) // copy obj
-      deleteUser(this.temp.id).then(() => {
-        for (const v of this.UserList) {
-          if (v.id === this.temp.id) {
-            this.UserList.splice(this.UserList.indexOf(v), 1)
-            break
+      MessageBox.confirm('sure to delete?', 'Confirm delete', {
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        type: 'error'
+      }).then(() => {
+        this.temp = Object.assign({}, row) // copy obj
+        deleteUser(this.temp.id).then(() => {
+          for (const v of this.UserList) {
+            if (v.id === this.temp.id) {
+              this.UserList.splice(this.UserList.indexOf(v), 1)
+              break
+            }
           }
-        }
-        this.total--
-        this.$message.success('Delete successfully!')
+          this.total--
+          this.$message.success('Delete successfully!')
+        })
       })
     },
     createData() {
@@ -288,11 +286,11 @@ export default {
         if (valid) {
           this.temp.createTime = new Date().getTime()
           this.temp.updateTime = this.temp.createTime
+          this.temp.listRoleId = this.listCheck
           createUser(this.temp).then(() => {
-            this.UserList.unshift(this.temp)// 镜像函数 list.push(), unshift()方法可向数组的开头添加一个或更多元素,
             this.dialogFormVisible = false
-            this.total++
             this.$message.success('Create successfully!')
+            this.getUser()
           })
         }
       })

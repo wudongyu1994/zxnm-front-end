@@ -7,6 +7,14 @@ export function getAllRole() {
   })
 }
 
+export function getRoleByPage(params) {
+  return request({
+    url: '/roleByPage',
+    method: 'get',
+    params
+  })
+}
+
 /*
 export function getUserByPage(query) {
   return request({

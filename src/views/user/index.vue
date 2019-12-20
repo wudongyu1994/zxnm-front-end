@@ -13,7 +13,7 @@
     <el-table
       :key="tableKey"
       v-loading="listLoading"
-      :data="UserList"
+      :data="userList"
       border
       fit
       highlight-current-row
@@ -84,7 +84,7 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="Id" prop="id">
-          {{ temp.id }}
+          <span>{{ temp.id }}</span>
         </el-form-item>
         <el-form-item label="Username" prop="username">
           <el-input v-model="temp.username" />
@@ -116,7 +116,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="Role" prop="role">
-          <el-select v-model="listCheck" multiple placeholder="please choose roles" @change="handleCheckedRoleChange">
+          <el-select v-model="listCheck" multiple placeholder="please choose roles">
             <el-option v-for="role in roleListAll" :key="role.id" :label="role.name" :value="role.id" />
           </el-select>
         </el-form-item>
@@ -135,13 +135,13 @@
 </template>
 
 <script>
-import { getUserByPage, createUser, updateUser, deleteUser } from '../../api/user'
+import { getUserByPage, addUser, modifyUser, deleteUser } from '../../api/user'
 import { getAllRole } from '../../api/role'
 import Pagination from '../../components/Pagination'
 import { MessageBox } from 'element-ui'
 
 export default {
-  name: 'ComplexTable',
+  name: 'User',
   components: { Pagination },
   filters: {
     statusFilter(status) {
@@ -169,7 +169,7 @@ export default {
         create: 'Create'
       },
       tableKey: 0,
-      UserList: null,
+      userList: null,
       roleListAll: null,
       listCheck: [],
       total: 0,
@@ -212,7 +212,7 @@ export default {
     getUser() {
       this.listLoading = true
       getUserByPage(this.pageSetting).then(response => {
-        this.UserList = response.data
+        this.userList = response.data
         this.total = response.count
         this.listLoading = false
       })
@@ -243,9 +243,6 @@ export default {
         roleId: undefined
       }
     },
-    handleCheckedRoleChange() {
-      console.info(this.listCheck)
-    },
     handleCreate() {
       this.resetTemp()
       this.dialogStatus = 'create'
@@ -271,9 +268,9 @@ export default {
       }).then(() => {
         this.temp = Object.assign({}, row) // copy obj
         deleteUser(this.temp.id).then(() => {
-          for (const v of this.UserList) {
+          for (const v of this.userList) {
             if (v.id === this.temp.id) {
-              this.UserList.splice(this.UserList.indexOf(v), 1)
+              this.userList.splice(this.userList.indexOf(v), 1)
               break
             }
           }
@@ -288,7 +285,7 @@ export default {
           this.temp.createTime = new Date().getTime()
           this.temp.updateTime = this.temp.createTime
           this.temp.listRoleId = this.listCheck
-          createUser(this.temp).then(() => {
+          addUser(this.temp).then(() => {
             this.dialogFormVisible = false
             this.$message.success('Create successfully!')
             this.getUser()
@@ -302,11 +299,11 @@ export default {
           this.temp.updateTime = new Date().getTime()
           this.temp.listRoleId = this.listCheck
           const tempData = Object.assign({}, this.temp)
-          updateUser(tempData).then(() => {
-            for (const v of this.UserList) {
+          modifyUser(tempData).then(() => {
+            for (const v of this.userList) {
               if (v.id === this.temp.id) {
-                const index = this.UserList.indexOf(v)
-                this.UserList.splice(index, 1, tempData)
+                const index = this.userList.indexOf(v)
+                this.userList.splice(index, 1, tempData)
                 break
               }
             }

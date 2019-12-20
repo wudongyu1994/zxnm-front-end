@@ -7,14 +7,14 @@ export function getUserByPage(params) {
     params
   })
 }
-export function createUser(data) {
+export function addUser(data) {
   return request({
     url: '/user',
     method: 'post',
     data
   })
 }
-export function updateUser(data) {
+export function modifyUser(data) {
   return request({
     url: '/user/' + data.id,
     method: 'patch',

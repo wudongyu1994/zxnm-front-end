@@ -19,7 +19,7 @@
       highlight-current-row
       style="width: 100%;"
     >
-      <el-table-column label="ID" prop="id" align="center" width="80">
+      <el-table-column label="ID" prop="id" align="center" width="50">
         <template slot-scope="{row: {id}}">
           <span>{{ id }}</span>
         </template>
@@ -34,7 +34,7 @@
           <span>{{ name }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Sex" align="center" width="80">
+      <el-table-column label="Sex" align="center" width="50">
         <template slot-scope="{row: {sex}}">
           {{ sexEnum[sex] }}
         </template>
@@ -66,7 +66,7 @@
           <el-tag v-for="role in roleList" :key="role.id">{{ role.name }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="Actions" align="center" width="200" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
           <el-button type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
             Edit
@@ -258,6 +258,7 @@ export default {
       this.temp = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
+      this.listCheck = this.temp.roleList.map(role => role.id)
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
@@ -311,6 +312,7 @@ export default {
             }
             this.dialogFormVisible = false
             this.$message.success('Update successfully!')
+            this.getUser()
           })
         }
       })

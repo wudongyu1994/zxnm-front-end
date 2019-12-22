@@ -240,7 +240,8 @@ export default {
         phone: '',
         email: '',
         status: undefined,
-        roleId: undefined
+        roleList: [],
+        listRoleId: []
       }
     },
     handleCreate() {
@@ -300,13 +301,6 @@ export default {
           this.temp.listRoleId = this.listCheck
           const tempData = Object.assign({}, this.temp)
           modifyUser(tempData).then(() => {
-            for (const v of this.userList) {
-              if (v.id === this.temp.id) {
-                const index = this.userList.indexOf(v)
-                this.userList.splice(index, 1, tempData)
-                break
-              }
-            }
             this.dialogFormVisible = false
             this.$message.success('Update successfully!')
             this.getUser()

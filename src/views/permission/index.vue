@@ -11,29 +11,16 @@
     </div>
 
     <el-table
-      :key="tableKey"
-      v-loading="listLoading"
-      :data="roleListRaw"
+      :data="listPermissionTree"
+      style="width: 100%;margin-bottom: 20px;"
+      row-key="id"
       border
-      fit
-      highlight-current-row
-      style="width: 100%;"
+      default-expand-all
     >
-      <el-table-column label="ID" prop="id" align="center" width="50">
-        <template slot-scope="{row: {id}}">
-          <span>{{ id }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Name" align="center" width="200">
-        <template slot-scope="{row: {name}}">
-          <span>{{ name }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Description" width="400">
-        <template slot-scope="{row: {description}}">
-          <span>{{ description }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="id" label="ID" width="150" />
+      <el-table-column prop="name" label="Name" width="100" />
+      <el-table-column prop="permission" label="Permission" width="180" />
+      <el-table-column prop="description" label="Description" width="250" />
       <el-table-column label="Actions" align="center" width="200" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
           <el-button type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
@@ -44,24 +31,27 @@
           </el-button>
         </template>
       </el-table-column>
-
     </el-table>
-
-    <pagination v-show="total>0" :total="total" :page.sync="pageSetting.page" :limit.sync="pageSetting.size" @pagination="getRole" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="Id" prop="id">
           <span>{{ temp.id }}</span>
         </el-form-item>
+        <el-form-item label="ParentId" prop="parentId">
+          <el-input>{{ temp.parentId }}</el-input>
+          <el-select v-model="temp.parentId" class="filter-item" placeholder="Please select">
+            <el-option v-for="item in listId" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="Name" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
+        <el-form-item label="Permission" prop="permission">
+          <el-input v-model="temp.permission" />
+        </el-form-item>
         <el-form-item label="Description" prop="description">
           <el-input v-model="temp.description" type="textarea" :rows="3" />
-        </el-form-item>
-        <el-form-item label="Permission" prop="permission">
-          <el-tree ref="tree" :data="listPermissionTree" show-checkbox default-expand-all node-key="id" highlight-current :props="myProps" @check-change="handlePerChange" />
         </el-form-item>
       </el-form>
 
@@ -78,15 +68,11 @@
 </template>
 
 <script>
-// import { getUserByPage, createUser, updateUser, deleteUser } from '../../api/user'
 import { getAllPermissionTree } from '../../api/permission'
-import { getRoleByPage, modifyRole, addRole, deleteRole } from '../../api/role'
-import Pagination from '../../components/Pagination'
-import { MessageBox } from 'element-ui'
+// import { MessageBox } from 'element-ui'
 
 export default {
-  name: 'Role',
-  components: { Pagination },
+  name: 'Permission',
   filters: {
     statusFilter(status) {
       const statusMap = {
@@ -99,35 +85,20 @@ export default {
   },
   data() {
     return {
-      statusEnum: [
-        'disable',
-        'valid',
-        'locked'
-      ],
-      sexEnum: [
-        'F',
-        'M'
-      ],
       textMap: {
         update: 'Edit',
         create: 'Create'
       },
-      myProps: {
-        label: 'name',
-        children: 'children'
-      },
+      listId: [],
       tableKey: 0,
-      roleListRaw: [],
-      listPermissionTree: [],
-      listPermissionKey: [],
+      roleListRaw: null,
       props: {
         label: 'label',
         children: 'children'
       },
-      listCheck: [],
+      listPermissionTree: [],
       total: 0,
       listLoading: true,
-      perLoading: true,
       pageSetting: {
         page: 1,
         size: 10
@@ -137,34 +108,44 @@ export default {
         createTime: new Date(),
         updateTime: new Date(),
         name: '',
+        permission: '',
         description: '',
-        permissionList: [],
-        listPermissionId: []
+        parentId: 0,
+        children: []
       },
       dialogFormVisible: false,
       dialogStatus: '',
       rules: {
-        name: { required: true, message: 'name is required', trigger: 'blur' }
+        name: [{ required: true, message: 'name is required', trigger: 'change' }],
+        username: [{ required: true, message: 'username is required', trigger: 'change' }],
+        password: [
+          { required: true, message: 'password is required', trigger: 'blur' },
+          { mix: 4, message: 'password must longer than 3', trigger: 'blur' }]
       }
     }
   },
   created() {
-    this.getRole()
     this.getTree()
   },
   methods: {
-    getRole() {
-      this.listLoading = true
-      getRoleByPage(this.pageSetting).then(response => {
-        this.roleListRaw = response.data
-        this.total = response.count
-        this.listLoading = false
+    getId(targetList, srcList) {
+      srcList.forEach(per => {
+        targetList.push(per.id)
+        if (per.children.length > 0) {
+          this.getId(targetList, per.children)
+        }
       })
+    },
+    getAllId(targetList, srcList) {
+      this.getId(targetList, srcList)
+      if (targetList.indexOf(0) === -1) targetList.push(0)
+      targetList.sort((a, b) => a - b)
     },
     getTree() {
       this.listLoading = true
       getAllPermissionTree().then(response => {
         this.listPermissionTree = response.data
+        this.getAllId(this.listId, response.data)
         this.total = response.count
         this.listLoading = false
       })
@@ -179,13 +160,14 @@ export default {
         createTime: new Date(),
         updateTime: new Date(),
         name: '',
+        permission: '',
         description: '',
-        permissionList: [],
-        listPermissionId: []
+        parentId: 0,
+        children: []
       }
     },
-    handlePerChange() {
-      // console.log(this.$refs.tree.getCheckedKeys().concat(this.$refs.tree.getHalfCheckedKeys()))
+    handleCheckChange(data) {
+      console.info(data)
     },
     handleCreate() {
       this.resetTemp()
@@ -193,7 +175,6 @@ export default {
       this.dialogFormVisible = true
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
-        this.$refs.tree.setCheckedKeys([])
       })
     },
     handleUpdate(row) {
@@ -202,49 +183,61 @@ export default {
       this.dialogFormVisible = true
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
-        this.$refs.tree.setCheckedKeys(this.temp.permissionList.map(per => per.id))
       })
     },
     handleDelete(row) {
-      MessageBox.confirm('sure to delete?', 'Confirm delete', {
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
-        type: 'error'
-      }).then(() => {
-        this.temp = Object.assign({}, row) // copy obj
-        deleteRole(this.temp.id).then(() => {
-          this.getRole()
-          this.$message.success('Delete successfully!')
-        })
-      })
+      // MessageBox.confirm('sure to delete?', 'Confirm delete', {
+      //   confirmButtonText: 'Delete',
+      //   cancelButtonText: 'Cancel',
+      //   type: 'error'
+      // }).then(() => {
+      //   this.temp = Object.assign({}, row) // copy obj
+      //   deleteUser(this.temp.id).then(() => {
+      //     for (const v of this.UserList) {
+      //       if (v.id === this.temp.id) {
+      //         this.UserList.splice(this.UserList.indexOf(v), 1)
+      //         break
+      //       }
+      //     }
+      //     this.total--
+      //     this.$message.success('Delete successfully!')
+      //   })
+      // })
     },
     createData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          this.temp.createTime = new Date().getTime()
-          this.temp.updateTime = this.temp.createTime
-          this.temp.listPermissionId = this.$refs.tree.getCheckedKeys()
-          addRole(this.temp).then(() => {
-            this.dialogFormVisible = false
-            this.$message.success('Create successfully!')
-            this.getRole()
-          })
-        }
-      })
+      // this.$refs['dataForm'].validate((valid) => {
+      //   if (valid) {
+      //     this.temp.createTime = new Date().getTime()
+      //     this.temp.updateTime = this.temp.createTime
+      //     this.temp.listRoleId = this.listCheck
+      //     createUser(this.temp).then(() => {
+      //       this.dialogFormVisible = false
+      //       this.$message.success('Create successfully!')
+      //       this.getUser()
+      //     })
+      //   }
+      // })
     },
     updateData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          this.temp.updateTime = new Date().getTime()
-          this.temp.listPermissionId = this.$refs.tree.getCheckedKeys()
-          const tempData = Object.assign({}, this.temp)
-          modifyRole(tempData).then(() => {
-            this.dialogFormVisible = false
-            this.$message.success('Update successfully!')
-            this.getRole()
-          })
-        }
-      })
+      // this.$refs['dataForm'].validate((valid) => {
+      //   if (valid) {
+      //     this.temp.updateTime = new Date().getTime()
+      //     this.temp.listRoleId = this.listCheck
+      //     const tempData = Object.assign({}, this.temp)
+      //     updateUser(tempData).then(() => {
+      //       for (const v of this.UserList) {
+      //         if (v.id === this.temp.id) {
+      //           const index = this.UserList.indexOf(v)
+      //           this.UserList.splice(index, 1, tempData)
+      //           break
+      //         }
+      //       }
+      //       this.dialogFormVisible = false
+      //       this.$message.success('Update successfully!')
+      //       this.getUser()
+      //     })
+      //   }
+      // })
     }
   }
 }

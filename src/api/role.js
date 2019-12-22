@@ -14,33 +14,24 @@ export function getRoleByPage(params) {
     params
   })
 }
-
-/*
-export function getUserByPage(query) {
+export function addRole(data) {
   return request({
-    url: '/user',
-    method: 'get',
-    param: query
-  })
-}
-export function createUser(data) {
-  return request({
-    url: '/user',
+    url: '/role',
     method: 'post',
     data
   })
 }
-export function updateUser(data) {
+
+export function modifyRole(data) {
   return request({
-    url: '/user/' + data.id,
+    url: '/role/' + data.id,
     method: 'patch',
     data
   })
 }
-export function deleteUser(id) {
+export function deleteRole(id) {
   return request({
-    url: '/user/' + id,
+    url: '/role/' + id,
     method: 'delete'
   })
 }
-*/

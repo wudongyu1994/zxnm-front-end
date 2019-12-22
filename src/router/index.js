@@ -144,6 +144,22 @@ export const asyncRoutes = [
     ]
   },
   {
+    path: '/permission',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Permission',
+        component: () => import('@/views/permission/index'),
+        meta: {
+          title: 'Permission',
+          icon: 'form',
+          permissions: ['/permission']
+        }
+      }
+    ]
+  },
+  {
     path: '/hello',
     component: Layout,
     children: [

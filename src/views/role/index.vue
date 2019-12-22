@@ -13,7 +13,7 @@
     <el-table
       :key="tableKey"
       v-loading="listLoading"
-      :data="userList"
+      :data="roleListRaw"
       border
       fit
       highlight-current-row
@@ -24,46 +24,14 @@
           <span>{{ id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Username" align="center" width="80">
-        <template slot-scope="{row: {username}}">
-          <span>{{ username }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Name" align="center" width="80">
+      <el-table-column label="Name" align="center" width="200">
         <template slot-scope="{row: {name}}">
           <span>{{ name }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Sex" align="center" width="50">
-        <template slot-scope="{row: {sex}}">
-          {{ sexEnum[sex] }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Corp" align="center" width="80">
-        <template slot-scope="{row: {corp}}">
-          <span>{{ corp }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Phone" align="center" width="120">
-        <template slot-scope="{row: {phone}}">
-          <span>{{ phone }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Email" align="center" width="150">
-        <template slot-scope="{row: {email}}">
-          <span>{{ email }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Status" align="center" width="80">
-        <template slot-scope="{row: {status}}">
-          <el-tag :type="statusEnum[status] | statusFilter">
-            {{ statusEnum[status] }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="Role" align="center" width="150">
-        <template slot-scope="{row: {roleList}}">
-          <el-tag v-for="role in roleList" :key="role.id">{{ role.name }}</el-tag>
+      <el-table-column label="Description" width="400">
+        <template slot-scope="{row: {description}}">
+          <span>{{ description }}</span>
         </template>
       </el-table-column>
       <el-table-column label="Actions" align="center" width="200" class-name="small-padding fixed-width">
@@ -79,46 +47,21 @@
 
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="pageSetting.page" :limit.sync="pageSetting.size" @pagination="getUser" />
+    <pagination v-show="total>0" :total="total" :page.sync="pageSetting.page" :limit.sync="pageSetting.size" @pagination="getRole" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="Id" prop="id">
           <span>{{ temp.id }}</span>
         </el-form-item>
-        <el-form-item label="Username" prop="username">
-          <el-input v-model="temp.username" />
-        </el-form-item>
-        <el-form-item label="Password" prop="password">
-          <el-input v-if="dialogStatus==='create'" v-model="temp.password" />
-          <span v-else>******</span>
-        </el-form-item>
         <el-form-item label="Name" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
-        <el-form-item label="Sex" prop="sex">
-          <el-select v-model="temp.sex" class="filter-item" placeholder="Please select">
-            <el-option v-for="(item, index) in sexEnum" :key="index" :label="item" :value="index" />
-          </el-select>
+        <el-form-item label="Description" prop="description">
+          <el-input v-model="temp.description" type="textarea" :rows="3" />
         </el-form-item>
-        <el-form-item label="Corp" prop="corp">
-          <el-input v-model="temp.corp" />
-        </el-form-item>
-        <el-form-item label="Phone" prop="phone">
-          <el-input v-model="temp.phone" />
-        </el-form-item>
-        <el-form-item label="Email" prop="email">
-          <el-input v-model="temp.email" />
-        </el-form-item>
-        <el-form-item label="Status" prop="status">
-          <el-select v-model="temp.status" class="filter-item" placeholder="Please select">
-            <el-option v-for="(item, index) in statusEnum" :key="index" :label="item" :value="index" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Role" prop="role">
-          <el-select v-model="listCheck" multiple placeholder="please choose roles">
-            <el-option v-for="role in roleListAll" :key="role.id" :label="role.name" :value="role.id" />
-          </el-select>
+        <el-form-item label="Permission" prop="permission">
+          <el-tree ref="tree" :data="listPermissionTree" show-checkbox default-expand-all node-key="id" highlight-current :props="myProps" @check-change="handlePerChange" />
         </el-form-item>
       </el-form>
 
@@ -135,13 +78,14 @@
 </template>
 
 <script>
-import { getUserByPage, addUser, modifyUser, deleteUser } from '../../api/user'
-import { getAllRole } from '../../api/role'
+// import { getUserByPage, createUser, updateUser, deleteUser } from '../../api/user'
+import { getAllPermissionTree } from '../../api/permission'
+import { getRoleByPage, modifyRole, addRole, deleteRole } from '../../api/role'
 import Pagination from '../../components/Pagination'
 import { MessageBox } from 'element-ui'
 
 export default {
-  name: 'User',
+  name: 'Role',
   components: { Pagination },
   filters: {
     statusFilter(status) {
@@ -168,12 +112,22 @@ export default {
         update: 'Edit',
         create: 'Create'
       },
+      myProps: {
+        label: 'name',
+        children: 'children'
+      },
       tableKey: 0,
-      userList: null,
-      roleListAll: null,
+      roleListRaw: [],
+      listPermissionTree: [],
+      listPermissionKey: [],
+      props: {
+        label: 'label',
+        children: 'children'
+      },
       listCheck: [],
       total: 0,
       listLoading: true,
+      perLoading: true,
       pageSetting: {
         page: 1,
         size: 10
@@ -183,49 +137,41 @@ export default {
         createTime: new Date(),
         updateTime: new Date(),
         name: '',
-        username: '',
-        password: '',
-        corp: '',
-        sex: undefined,
-        phone: '',
-        email: '',
-        status: undefined,
-        roleList: [],
-        listRoleId: []
+        description: '',
+        permissionList: [],
+        listPermissionId: []
       },
       dialogFormVisible: false,
       dialogStatus: '',
       rules: {
-        name: [{ required: true, message: 'name is required', trigger: 'change' }],
-        username: [{ required: true, message: 'username is required', trigger: 'change' }],
-        password: [
-          { required: true, message: 'password is required', trigger: 'blur' },
-          { mix: 4, message: 'password must longer than 3', trigger: 'blur' }]
+        name: { required: true, message: 'name is required', trigger: 'blur' }
       }
     }
   },
   created() {
     this.getRole()
-    this.getUser()
+    this.getTree()
   },
   methods: {
-    getUser() {
+    getRole() {
       this.listLoading = true
-      getUserByPage(this.pageSetting).then(response => {
-        this.userList = response.data
+      getRoleByPage(this.pageSetting).then(response => {
+        this.roleListRaw = response.data
         this.total = response.count
         this.listLoading = false
       })
     },
-    getRole() {
+    getTree() {
       this.listLoading = true
-      getAllRole().then(response => {
-        this.roleListAll = response.data
+      getAllPermissionTree().then(response => {
+        this.listPermissionTree = response.data
+        this.total = response.count
+        this.listLoading = false
       })
     },
     handleFilter() {
       this.pageSetting.page = 1
-      this.getUser()
+      this.getRole()
     },
     resetTemp() {
       this.temp = {
@@ -233,16 +179,13 @@ export default {
         createTime: new Date(),
         updateTime: new Date(),
         name: '',
-        username: '',
-        password: '',
-        corp: '',
-        sex: undefined,
-        phone: '',
-        email: '',
-        status: undefined,
-        roleList: [],
-        listRoleId: []
+        description: '',
+        permissionList: [],
+        listPermissionId: []
       }
+    },
+    handlePerChange() {
+      // console.log(this.$refs.tree.getCheckedKeys().concat(this.$refs.tree.getHalfCheckedKeys()))
     },
     handleCreate() {
       this.resetTemp()
@@ -250,15 +193,16 @@ export default {
       this.dialogFormVisible = true
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
+        this.$refs.tree.setCheckedKeys([])
       })
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
-      this.listCheck = this.temp.roleList.map(role => role.id)
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
+        this.$refs.tree.setCheckedKeys(this.temp.permissionList.map(per => per.id))
       })
     },
     handleDelete(row) {
@@ -268,14 +212,8 @@ export default {
         type: 'error'
       }).then(() => {
         this.temp = Object.assign({}, row) // copy obj
-        deleteUser(this.temp.id).then(() => {
-          for (const v of this.userList) {
-            if (v.id === this.temp.id) {
-              this.userList.splice(this.userList.indexOf(v), 1)
-              break
-            }
-          }
-          this.total--
+        deleteRole(this.temp.id).then(() => {
+          this.getRole()
           this.$message.success('Delete successfully!')
         })
       })
@@ -285,11 +223,11 @@ export default {
         if (valid) {
           this.temp.createTime = new Date().getTime()
           this.temp.updateTime = this.temp.createTime
-          this.temp.listRoleId = this.listCheck
-          addUser(this.temp).then(() => {
+          this.temp.listPermissionId = this.$refs.tree.getCheckedKeys()
+          addRole(this.temp).then(() => {
             this.dialogFormVisible = false
             this.$message.success('Create successfully!')
-            this.getUser()
+            this.getRole()
           })
         }
       })
@@ -298,12 +236,12 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           this.temp.updateTime = new Date().getTime()
-          this.temp.listRoleId = this.listCheck
+          this.temp.listPermissionId = this.$refs.tree.getCheckedKeys()
           const tempData = Object.assign({}, this.temp)
-          modifyUser(tempData).then(() => {
+          modifyRole(tempData).then(() => {
             this.dialogFormVisible = false
             this.$message.success('Update successfully!')
-            this.getUser()
+            this.getRole()
           })
         }
       })

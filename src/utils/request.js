@@ -6,7 +6,7 @@ const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API,
   timeout: 5000
 })
-
+service.defaults.headers['Content-Type'] = 'application/json;charset=UTF-8'
 service.interceptors.request.use(
   config => config,
   error => {
@@ -42,8 +42,8 @@ service.interceptors.response.use(
     }
   },
   error => {
-    console.log('err:' + error) // for debug
-    Message.error(error.msg)
+    console.log('err===>' + error) // for debug
+    Message.error(error.message)
     return Promise.reject(error)
   }
 )

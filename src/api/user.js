@@ -1,16 +1,29 @@
 import request from '@/utils/request'
-import qs from 'qs'
 
-export function test1() {
+export function getUserByPage(params) {
   return request({
-    url: '/hello',
-    method: 'get'
+    url: '/user',
+    method: 'get',
+    params
   })
 }
-export function test2(data) {
+export function addUser(data) {
   return request({
-    url: '/test',
+    url: '/user',
     method: 'post',
-    data: qs.stringify(data)
+    data
+  })
+}
+export function modifyUser(data) {
+  return request({
+    url: '/user/' + data.id,
+    method: 'patch',
+    data
+  })
+}
+export function deleteUser(id) {
+  return request({
+    url: '/user/' + id,
+    method: 'delete'
   })
 }

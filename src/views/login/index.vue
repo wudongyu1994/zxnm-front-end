@@ -42,20 +42,11 @@
       </el-form-item>
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
-
-      <!--      <el-button @click="test1">test1-hello</el-button>-->
-      <!--      <el-button @click="test2">test2-test</el-button>-->
-      <!--      <el-button @click="test3">test3-login</el-button>-->
-
     </el-form>
   </div>
 </template>
 
 <script>
-import { asyncRoutes } from '../../router'
-import { filterAsyncRoutes } from '../../store/modules/permission'
-// import { test1, test2 } from '../../api/user'
-// import { login } from '@/api/auth'
 export default {
   name: 'Login',
   data() {
@@ -110,17 +101,6 @@ export default {
           return false
         }
       })
-    },
-    test1() {
-      const auth = ['/test', '/hello', '/user']
-      const accessedRoutes = filterAsyncRoutes(asyncRoutes, auth)
-      console.log(accessedRoutes)
-    },
-    test2() {
-
-    },
-    test3() {
-
     }
   }
 }

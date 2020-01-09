@@ -46,7 +46,7 @@ export const constantRoutes = [
   {
     path: '/',
     component: Layout,
-    // redirect: '/dashboard',
+    redirect: '/dashboard',
     children: [{
       path: 'dashboard',
       name: 'Dashboard',
@@ -112,6 +112,54 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
   {
+    path: '/user',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'User',
+        component: () => import('@/views/user/index'),
+        meta: {
+          title: 'User',
+          icon: 'peoples',
+          permissions: '/user'
+        }
+      }
+    ]
+  },
+  {
+    path: '/role',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Role',
+        component: () => import('@/views/role/index'),
+        meta: {
+          title: 'Role',
+          icon: 'people',
+          permissions: '/role'
+        }
+      }
+    ]
+  },
+  {
+    path: '/permission',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Permission',
+        component: () => import('@/views/permission/index'),
+        meta: {
+          title: 'Permission',
+          icon: 'form',
+          permissions: '/permission'
+        }
+      }
+    ]
+  },
+  {
     path: '/hello',
     component: Layout,
     children: [
@@ -122,7 +170,7 @@ export const asyncRoutes = [
         meta: {
           title: 'Hello',
           icon: 'form',
-          permissions: ['/hello']
+          permissions: '/hello'
         }
       }
     ]
@@ -138,23 +186,7 @@ export const asyncRoutes = [
         meta: {
           title: 'Test',
           icon: 'form',
-          permissions: ['/test']
-        }
-      }
-    ]
-  },
-  {
-    path: '/user',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'User',
-        component: () => import('@/views/dashboard/index'),
-        meta: {
-          title: 'User',
-          icon: 'form',
-          permissions: ['/user']
+          permissions: '/test'
         }
       }
     ]
@@ -167,7 +199,7 @@ export const asyncRoutes = [
     meta: {
       title: 'Nested',
       icon: 'nested',
-      permissions: ['/nested']
+      permissions: '/nested'
     },
     children: [
       {

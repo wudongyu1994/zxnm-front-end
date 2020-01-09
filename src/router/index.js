@@ -122,7 +122,7 @@ export const asyncRoutes = [
         meta: {
           title: 'User',
           icon: 'peoples',
-          permissions: ['/user']
+          permissions: '/user'
         }
       }
     ]
@@ -138,7 +138,7 @@ export const asyncRoutes = [
         meta: {
           title: 'Role',
           icon: 'people',
-          permissions: ['/role']
+          permissions: '/role'
         }
       }
     ]
@@ -154,7 +154,7 @@ export const asyncRoutes = [
         meta: {
           title: 'Permission',
           icon: 'form',
-          permissions: ['/permission']
+          permissions: '/permission'
         }
       }
     ]
@@ -170,7 +170,7 @@ export const asyncRoutes = [
         meta: {
           title: 'Hello',
           icon: 'form',
-          permissions: ['/hello']
+          permissions: '/hello'
         }
       }
     ]
@@ -186,7 +186,7 @@ export const asyncRoutes = [
         meta: {
           title: 'Test',
           icon: 'form',
-          permissions: ['/test']
+          permissions: '/test'
         }
       }
     ]
@@ -199,7 +199,7 @@ export const asyncRoutes = [
     meta: {
       title: 'Nested',
       icon: 'nested',
-      permissions: ['/nested']
+      permissions: '/nested'
     },
     children: [
       {

@@ -75,13 +75,13 @@
         style="width: 100%;"
       >
         <el-table-column label="product">
-          <template slot-scope="{row: {product}}">
-            <span>{{ product.name }}</span>
+          <template slot-scope="{row: {name}}">
+            <span>{{ name }}</span>
           </template>
         </el-table-column>
         <el-table-column label="price for each">
-          <template slot-scope="{row: {product}}">
-            <span>{{ product.price }}</span>
+          <template slot-scope="{row: {price}}">
+            <span>{{ price }}</span>
           </template>
         </el-table-column>
         <el-table-column label="number">
@@ -235,7 +235,7 @@ export default {
     totalPrice: function() {
       let sum = 0
       this.productListInCart.forEach(val => {
-        sum += val.number * val.product.price
+        sum += val.number * val.price
       })
       return sum
     },
@@ -306,7 +306,10 @@ export default {
       })
     },
     createOrder() {
+      const now = new Date().getTime()
       const orderVO = {
+        createTime: now,
+        updateTime: now,
         userId: this.principal.id,
         money: this.totalPrice,
         address: this.orderTemp.address,
@@ -315,20 +318,24 @@ export default {
         productItemList: this.productListInCart
       }
       addOrder(orderVO).then(() => {
-        this.dialogFormVisible = false
+        this.productListInCart = []
+        this.orderTemp = {
+          address: '',
+          phone: '',
+          note: ''
+        }
+        this.cartVisible = false
         this.$message.success('Create successfully!\nYou can see order in Order page')
       })
     },
     addPro(item, index) {
       const number = this.nums[index]
-      const findIndex = this.productListInCart.findIndex(pro => pro.product.id === item.id)
+      const findIndex = this.productListInCart.findIndex(pro => pro.id === item.id)
       if (findIndex !== -1) {
         this.productListInCart[findIndex].number += number
       } else {
-        // const productItem = Object.assign(item, { number })
-        // console.log(productItem)
-        this.productListInCart.push({ product: item, number })
-        console.log(this.productListInCart)
+        this.$set(item, 'number', number)
+        this.productListInCart.push(item)
       }
       this.$message.success('added to cart successfully!')
     },

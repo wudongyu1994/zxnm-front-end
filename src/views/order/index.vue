@@ -78,15 +78,13 @@
       </el-table-column>
       <el-table-column label="Actions" align="center" width="100" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
-          <el-button type="success" size="mini" icon="el-icon-order" @click="handleShowGoods(row)">
+          <el-button style="margin: 5px;" type="success" size="mini" icon="el-icon-order" @click="handleShowGoods(row)">
             Goods
           </el-button>
-          <br>
-          <el-button type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
+          <el-button v-if="hasRightModify" style="margin: 5px;" type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
             Edit
           </el-button>
-          <br>
-          <el-button size="mini" type="danger" icon="el-icon-delete" @click="handleDelete(row)">
+          <el-button v-if="hasRightDelete" style="margin: 5px;" size="mini" type="danger" icon="el-icon-delete" @click="handleDelete(row)">
             Delete
           </el-button>
         </template>
@@ -153,6 +151,7 @@
 import { getOrderByPage, modifyOrder, deleteOrder } from '../../api/order'
 import Pagination from '../../components/Pagination'
 import { MessageBox } from 'element-ui'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'Order',
@@ -169,8 +168,15 @@ export default {
       return statusMap[status]
     }
   },
+  computed: {
+    ...mapGetters([
+      'authorities'
+    ])
+  },
   data() {
     return {
+      hasRightDelete: false,
+      hasRightModify: false,
       statusEnum: [
         'CREATED',
         'PAID',
@@ -212,6 +218,8 @@ export default {
     }
   },
   created() {
+    this.hasRightDelete = this.authorities.some(val => val === '/order/delete')
+    this.hasRightModify = this.authorities.some(val => val === '/order/modify')
     this.getOrder()
   },
   methods: {
@@ -246,14 +254,6 @@ export default {
         expressNo: ''
       }
     },
-    // handleCreate() {
-    //   this.resetTemp()
-    //   this.dialogStatus = 'create'
-    //   this.dialogFormVisible = true
-    //   this.$nextTick(() => {
-    //     this.$refs['dataForm'].clearValidate()
-    //   })
-    // },
     handleShowGoods(row) {
 
     },
@@ -278,19 +278,6 @@ export default {
         })
       })
     },
-    // createData() {
-    //   this.$refs['dataForm'].validate((valid) => {
-    //     if (valid) {
-    //       this.temp.createTime = new Date().getTime()
-    //       this.temp.updateTime = this.temp.createTime
-    //       // addOrder(this.temp).then(() => {
-    //       //   this.dialogFormVisible = false
-    //       //   this.$message.success('Create successfully!')
-    //       //   this.getOrder()
-    //       // })
-    //     }
-    //   })
-    // },
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {

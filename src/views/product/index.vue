@@ -16,7 +16,7 @@
       </el-button>
     </div>
 
-<!--    卡片列表-->
+    <!--    卡片列表-->
     <el-row style="margin: 20px;">
       <el-col v-for="(item, index) in proListRaw" :key="index" :span="6">
         <el-card class="box-card" :body-style="{ padding: '0px' }">
@@ -60,7 +60,7 @@
       </el-col>
     </el-row>
 
-<!--    购物车对话框-->
+    <!--    购物车对话框-->
     <el-dialog
       title="shopping cart"
       :visible.sync="cartVisible"
@@ -79,17 +79,45 @@
             <span>{{ product.name }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="number">
-          <template slot-scope="{row: {number}}">
-            <span>{{ number }}</span>
-          </template>
-        </el-table-column>
         <el-table-column label="price for each">
           <template slot-scope="{row: {product}}">
             <span>{{ product.price }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="number">
+          <template slot-scope="{row: {number}}">
+            <span>{{ number }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="action">
+          <template slot-scope="{ $index}">
+            <el-button type="primary" icon="el-icon-minus" @click="numberMinus($index)" />
+            <el-button type="primary" icon="el-icon-plus" @click="numberPlus($index)" />
+            <el-button type="danger" icon="el-icon-delete" @click="deleteProItem($index)" />
+          </template>
+        </el-table-column>
       </el-table>
+
+      <div class="div-wdy">
+        <el-form
+          ref="dataForm"
+          :rules="rulesInOrder"
+          :model="orderTemp"
+          label-position="right"
+          label-width="100px"
+          style="width: 400px; margin-left:50px;"
+        >
+          <el-form-item label="address" prop="address">
+            <el-input v-model="orderTemp.address" />
+          </el-form-item>
+          <el-form-item label="phone" prop="phone">
+            <el-input v-model="orderTemp.phone" />
+          </el-form-item>
+          <el-form-item label="note" prop="note">
+            <el-input v-model="orderTemp.note" />
+          </el-form-item>
+        </el-form>
+      </div>
 
       <div slot="footer" class="dialog-footer">
         <span style="font-size: 20pt;float: left;vertical-align: middle">
@@ -103,7 +131,7 @@
       </div>
     </el-dialog>
 
-<!--    创建/修改产品对话框-->
+    <!--    创建/修改产品对话框-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form
         ref="dataForm"
@@ -150,11 +178,17 @@
 import { getProduct, addProduct, modifyProduct, deleteProduct } from '../../api/product'
 import { MessageBox } from 'element-ui'
 import { mapGetters } from 'vuex'
+import { addOrder } from '../../api/order'
 
 export default {
   name: 'Product',
   data() {
     return {
+      orderTemp: {
+        address: '',
+        phone: '',
+        note: ''
+      },
       textMap: {
         update: 'Edit',
         create: 'Create'
@@ -162,6 +196,8 @@ export default {
       hasRightDelete: false,
       hasRightUpdate: false,
       hasRightAdd: false,
+      orderNote: '',
+      tempNum: 0,
       tableKey: 0,
       proListRaw: [],
       productListInCart: [],
@@ -187,6 +223,11 @@ export default {
         serial: { required: true, message: 'serial is required', trigger: 'blur' },
         price: [{ required: true, message: 'price is required', trigger: 'blur' },
           { type: 'number', message: 'price must be number', trigger: 'blur' }]
+      },
+      rulesInOrder: {
+        address: { required: true, message: 'address is required', trigger: 'blur' },
+        phone: [{ required: true, message: 'phone is required', trigger: 'blur' },
+          { min: 11, max: 11, message: 'phone must be 11 numbers', trigger: 'blur' }]
       }
     }
   },
@@ -199,7 +240,8 @@ export default {
       return sum
     },
     ...mapGetters([
-      'authorities'
+      'authorities',
+      'principal'
     ])
   },
   created() {
@@ -264,16 +306,29 @@ export default {
       })
     },
     createOrder() {
-
-      // this.productListInCart = []
+      const orderVO = {
+        userId: this.principal.id,
+        money: this.totalPrice,
+        address: this.orderTemp.address,
+        phone: this.orderTemp.phone,
+        note: this.orderTemp.note,
+        productItemList: this.productListInCart
+      }
+      addOrder(orderVO).then(() => {
+        this.dialogFormVisible = false
+        this.$message.success('Create successfully!\nYou can see order in Order page')
+      })
     },
     addPro(item, index) {
       const number = this.nums[index]
-      const findIndex = this.productListInCart.findIndex(pro => pro.id === item.id)
+      const findIndex = this.productListInCart.findIndex(pro => pro.product.id === item.id)
       if (findIndex !== -1) {
         this.productListInCart[findIndex].number += number
       } else {
-        this.productListInCart.push({ id: item.id, product: item, number })
+        // const productItem = Object.assign(item, { number })
+        // console.log(productItem)
+        this.productListInCart.push({ product: item, number })
+        console.log(this.productListInCart)
       }
       this.$message.success('added to cart successfully!')
     },
@@ -300,6 +355,15 @@ export default {
           this.$message.success('Delete successfully!')
         })
       })
+    },
+    deleteProItem(index) {
+      this.productListInCart.splice(index, 1)
+    },
+    numberPlus(index) {
+      this.productListInCart[index].number++
+    },
+    numberMinus(index) {
+      if (this.productListInCart[index].number > 1) { this.productListInCart[index].number-- }
     }
   }
 }

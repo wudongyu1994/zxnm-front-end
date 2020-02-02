@@ -7,6 +7,12 @@ export function getOrderByPage(params) {
     params
   })
 }
+export function getProductItemByOrderId(orderId) {
+  return request({
+    url: '/order/' + orderId + '/productItem',
+    method: 'get'
+  })
+}
 export function addOrder(data) {
   return request({
     url: '/order',

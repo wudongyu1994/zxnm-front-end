@@ -19,17 +19,17 @@
       highlight-current-row
       style="width: 100%;"
     >
-      <el-table-column label="orderNo" prop="orderNo" align="center" width="80">
+      <el-table-column label="orderNo" prop="orderNo" align="center" width="120">
         <template slot-scope="{row: {orderNo}}">
           <span>{{ orderNo }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="userId" align="center" width="50">
+      <el-table-column label="userId" align="center" width="70">
         <template slot-scope="{row: {userId}}">
           <span>{{ userId }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="expressNo" width="80">
+      <el-table-column label="expressNo" width="120">
         <template slot-scope="{row: {expressNo}}">
           <span>{{ expressNo }}</span>
         </template>
@@ -46,19 +46,19 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="payTime" width="80">
+      <el-table-column label="payTime" width="140">
         <template slot-scope="{row: {payTime}}">
-          <span>{{ payTime }}</span>
+          <span>{{ payTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="deliveryTime" width="80">
+      <el-table-column label="deliveryTime" width="140">
         <template slot-scope="{row: {deliveryTime}}">
-          <span>{{ deliveryTime }}</span>
+          <span>{{ deliveryTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="receiveTime" width="80">
+      <el-table-column label="receiveTime" width="140">
         <template slot-scope="{row: {receiveTime}}">
-          <span>{{ receiveTime }}</span>
+          <span>{{ receiveTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="address" width="150">
@@ -76,17 +76,19 @@
           <span>{{ note }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Actions" align="center" width="100" class-name="small-padding fixed-width">
+      <el-table-column label="Actions" align="center" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
-          <el-button style="margin: 5px;" type="success" size="mini" icon="el-icon-order" @click="handleShowGoods(row)">
+          <el-button v-if="row.orderStatus<4" style="margin: 5px;" type="warning" size="mini" @click="handlePay_Rec(row)">
+            {{ buttonTextMap[row.orderStatus] }}
+          </el-button>
+          <el-button style="margin: 5px;" type="success" size="mini" @click="handleShowGoods(row)">
             Goods
           </el-button>
-          <el-button v-if="hasRightModify" style="margin: 5px;" type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
-            Edit
+          <el-button style="margin: 5px;" type="success" size="mini" @click="handleShowLogistics(row)">
+            Logistics
           </el-button>
-          <el-button v-if="hasRightDelete" style="margin: 5px;" size="mini" type="danger" icon="el-icon-delete" @click="handleDelete(row)">
-            Delete
-          </el-button>
+          <el-button v-if="hasRightModify" style="margin: 5px;" type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)" />
+          <el-button v-if="hasRightDelete" style="margin: 5px;" size="mini" type="danger" icon="el-icon-delete" @click="handleDelete(row)" />
         </template>
       </el-table-column>
 
@@ -94,6 +96,7 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="pageSetting.page" :limit.sync="pageSetting.size" @pagination="getOrder" />
 
+    <!--    编辑对话框-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="id" prop="id">
@@ -106,7 +109,7 @@
           <span>{{ temp.userId }}</span>
         </el-form-item>
         <el-form-item label="expressNo" prop="expressNo">
-          <span>{{ temp.expressNo }}</span>
+          <el-input v-model="temp.expressNo" />
         </el-form-item>
         <el-form-item label="money" prop="money">
           <span>{{ temp.money }}</span>
@@ -144,12 +147,85 @@
         </el-button>
       </div>
     </el-dialog>
+
+    <!--    查看产品对话框-->
+    <el-dialog title="ProductItem List" :visible.sync="productItemListVisible">
+      <el-table
+        v-loading="listLoading"
+        :data="productItemList"
+        border
+        fit
+        highlight-current-row
+        style="width: 100%;"
+      >
+        <el-table-column label="name" align="center" width="150">
+          <template slot-scope="{row: {name}}">
+            <span>{{ name }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="proNo" align="center" width="100">
+          <template slot-scope="{row: {proNo}}">
+            <span>{{ proNo }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="price" align="center" width="80">
+          <template slot-scope="{row: {price}}">
+            <span>{{ price }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="number" align="center" width="80">
+          <template slot-scope="{row: {number}}">
+            <span>{{ number }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="productItemListVisible = false">
+          Close
+        </el-button>
+      </div>
+    </el-dialog>
+
+    <!--    物流对话框-->
+    <el-dialog title="Logistics" :visible.sync="logisticsVisible">
+      <el-table
+        v-loading="listLoading"
+        :data="logisticsList"
+        border
+        fit
+        highlight-current-row
+        style="width: 100%;"
+      >
+        <el-table-column label="createTime" align="center" width="140">
+          <template slot-scope="{row: {createTime}}">
+            <span>{{ createTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="address" align="center" width="200">
+          <template slot-scope="{row: {address}}">
+            <span>{{ address }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="userId" align="center" width="140">
+          <template slot-scope="{row: {userId}}">
+            <span>{{ userId }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="logisticsVisible = false">
+          Close
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getOrderByPage, modifyOrder, deleteOrder } from '../../api/order'
+import { getOrderByPage, getProductItemByOrderId, modifyOrder, deleteOrder } from '../../api/order'
+import { getLogisticsByOrderId } from '../../api/logistics'
 import Pagination from '../../components/Pagination'
+import { formatTime } from '../../utils'
 import { MessageBox } from 'element-ui'
 import { mapGetters } from 'vuex'
 
@@ -166,12 +242,10 @@ export default {
         RECEIVED: 'info' // grey
       }
       return statusMap[status]
+    },
+    parseTime(time, format) {
+      return formatTime(time, format)
     }
-  },
-  computed: {
-    ...mapGetters([
-      'authorities'
-    ])
   },
   data() {
     return {
@@ -184,11 +258,20 @@ export default {
         'DELIVERY',
         'RECEIVED'
       ],
+      buttonTextMap: [
+        'pay',
+        'receive',
+        'receive',
+        'receive',
+        'receive'
+      ],
       textMap: {
         update: 'Edit',
         create: 'Create'
       },
       tableKey: 0,
+      productItemList: [],
+      logisticsList: [],
       orderListRaw: [],
       total: 0,
       listLoading: true,
@@ -214,8 +297,15 @@ export default {
         expressNo: ''
       },
       dialogFormVisible: false,
+      productItemListVisible: false,
+      logisticsVisible: false,
       dialogStatus: ''
     }
+  },
+  computed: {
+    ...mapGetters([
+      'authorities'
+    ])
   },
   created() {
     this.hasRightDelete = this.authorities.some(val => val === '/order/delete')
@@ -254,8 +344,50 @@ export default {
         expressNo: ''
       }
     },
+    handlePay_Rec(row) {
+      if (row.orderStatus === 0) {
+        MessageBox.confirm('sure to pay?', 'Confirm Pay', {
+          confirmButtonText: 'Pay',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }).then(() => {
+          this.temp = Object.assign({}, row)
+          this.temp.orderStatus++
+          this.temp.payTime = new Date().getTime()
+          modifyOrder(this.temp).then(() => {
+            this.getOrder()
+            this.$message.success('Paid successfully!')
+          })
+        })
+      } else {
+        MessageBox.confirm('sure to receive?', 'Confirm Receive', {
+          confirmButtonText: 'Receive',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }).then(() => {
+          this.temp = Object.assign({}, row)
+          this.temp.orderStatus = 4
+          this.temp.receiveTime = new Date().getTime()
+          modifyOrder(this.temp).then(() => {
+            this.getOrder()
+            this.$message.success('Received successfully!')
+          })
+        })
+      }
+    },
     handleShowGoods(row) {
-
+      const orderId = row.id
+      getProductItemByOrderId(orderId).then(response => {
+        this.productItemList = response.data
+        this.productItemListVisible = true
+      })
+    },
+    handleShowLogistics(row) {
+      const orderId = row.id
+      getLogisticsByOrderId(orderId).then(response => {
+        this.logisticsList = response.data
+        this.logisticsVisible = true
+      })
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj

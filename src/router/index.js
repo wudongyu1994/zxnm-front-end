@@ -92,6 +92,20 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
   {
+    path: '/logistics',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: 'Logistics',
+      component: () => import('@/views/logistics/index'),
+      meta: {
+        title: 'Logistics',
+        icon: 'logistics',
+        permissions: '/logistics'
+      }
+    }]
+  },
+  {
     path: '/user',
     component: Layout,
     children: [{

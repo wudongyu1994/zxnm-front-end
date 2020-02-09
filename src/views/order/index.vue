@@ -96,7 +96,7 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="pageSetting.page" :limit.sync="pageSetting.size" @pagination="getOrder" />
 
-    <!--    编辑对话框-->
+    <!--订单编辑对话框-->
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
         <el-form-item label="id" prop="id">
@@ -148,7 +148,7 @@
       </div>
     </el-dialog>
 
-    <!--    查看产品对话框-->
+    <!--产品对话框-->
     <el-dialog title="ProductItem List" :visible.sync="productItemListVisible">
       <el-table
         v-loading="listLoading"
@@ -178,6 +178,11 @@
             <span>{{ number }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="action" align="center">
+          <template slot-scope="{row}">
+            <el-button type="success" @click="showMaterialDialog(row)">material</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <div slot="footer" class="dialog-footer">
         <el-button @click="productItemListVisible = false">
@@ -186,7 +191,76 @@
       </div>
     </el-dialog>
 
-    <!--    物流对话框-->
+    <!--物料对话框-->
+    <el-dialog :title="productItemTemp.name+'\'s Material List'" :visible.sync="materialListVisible">
+      <el-button type="primary" icon="el-icon-plus" @click="handleMaterialCreate(productItemTemp)" />
+      <el-table
+        v-loading="listLoading"
+        :data="materialList"
+        border
+        fit
+        highlight-current-row
+        style="width: 100%;"
+      >
+        <el-table-column label="material" align="center" width="150">
+          <template slot-scope="{row: {name}}">
+            <span>{{ name }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="corp" align="center" width="100">
+          <template slot-scope="{row: {corp}}">
+            <span>{{ corp }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="batchNo" align="center" width="80">
+          <template slot-scope="{row: {batchNo}}">
+            <span>{{ batchNo }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="action" align="center">
+          <template slot-scope="{row}">
+            <el-button type="primary" icon="el-icon-edit" @click="handleMaterialModify(row)" />
+            <el-button type="danger" icon="el-icon-delete" @click="handleMaterialDelete(row)" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="materialListVisible = false">
+          Close
+        </el-button>
+      </div>
+    </el-dialog>
+
+    <!--物料编辑对话框-->
+    <el-dialog :title="textMap[dialogStatus] + 'Material'" :visible.sync="materialModifyVisible">
+      <el-form ref="materialForm" :rules="rulesMaterial" :model="tempMaterial" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
+        <el-form-item label="id" prop="id">
+          <span>{{ tempMaterial.id }}</span>
+        </el-form-item>
+        <el-form-item label="productItem name" prop="productItemName">
+          <span>{{ productItemTemp.name }}</span>
+        </el-form-item>
+        <el-form-item label="name" prop="name">
+          <el-input v-model="tempMaterial.name" />
+        </el-form-item>
+        <el-form-item label="corp" prop="corp">
+          <el-input v-model="tempMaterial.corp" />
+        </el-form-item>
+        <el-form-item label="batchNo" prop="batchNo">
+          <el-input v-model="tempMaterial.batchNo" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="materialModifyVisible = false">
+          Cancel
+        </el-button>
+        <el-button type="primary" @click="dialogStatus==='create'?createMaterial():updateMaterial()">
+          Confirm
+        </el-button>
+      </div>
+    </el-dialog>
+
+    <!--物流对话框-->
     <el-dialog title="Logistics" :visible.sync="logisticsVisible">
       <el-table
         v-loading="listLoading"
@@ -224,6 +298,7 @@
 <script>
 import { getOrderByPage, getProductItemByOrderId, modifyOrder, deleteOrder } from '../../api/order'
 import { getLogisticsByOrderId } from '../../api/logistics'
+import { addMaterial, deleteMaterial, getMaterialByProductItemId } from '../../api/material'
 import Pagination from '../../components/Pagination'
 import { formatTime } from '../../utils'
 import { MessageBox } from 'element-ui'
@@ -271,6 +346,7 @@ export default {
       },
       tableKey: 0,
       productItemList: [],
+      materialList: [],
       logisticsList: [],
       orderListRaw: [],
       total: 0,
@@ -296,10 +372,27 @@ export default {
         note: '',
         expressNo: ''
       },
+      tempMaterial: {
+        id: 0,
+        productItemId: 0,
+        name: '',
+        corp: '',
+        batchNo: ''
+      },
+      productItemTemp: {
+        name: ''
+      },
       dialogFormVisible: false,
       productItemListVisible: false,
+      materialListVisible: false,
+      materialModifyVisible: false,
       logisticsVisible: false,
-      dialogStatus: ''
+      dialogStatus: '',
+      rulesMaterial: {
+        name: [{ required: true, message: 'name is required', trigger: 'blur' }],
+        corp: [{ required: true, message: 'corp is required', trigger: 'blur' }],
+        batchNo: [{ required: true, message: 'batchNo is required', trigger: 'blur' }]
+      }
     }
   },
   computed: {
@@ -344,6 +437,15 @@ export default {
         expressNo: ''
       }
     },
+    resetTempMaterial() {
+      this.tempMaterial = {
+        id: 0,
+        productItemId: 0,
+        name: '',
+        corp: '',
+        batchNo: ''
+      }
+    },
     handlePay_Rec(row) {
       if (row.orderStatus === 0) {
         MessageBox.confirm('sure to pay?', 'Confirm Pay', {
@@ -383,8 +485,7 @@ export default {
       })
     },
     handleShowLogistics(row) {
-      const orderId = row.id
-      getLogisticsByOrderId(orderId).then(response => {
+      getLogisticsByOrderId(row.id).then(response => {
         this.logisticsList = response.data
         this.logisticsVisible = true
       })
@@ -419,6 +520,76 @@ export default {
             this.dialogFormVisible = false
             this.$message.success('Update successfully!')
             this.getOrder()
+          })
+        }
+      })
+    },
+    showMaterialDialog(row) {
+      getMaterialByProductItemId(row.id).then(response => {
+        this.materialList = response.data
+        this.productItemTemp = row
+        this.materialListVisible = true
+      })
+    },
+    handleMaterialCreate(productItem) {
+      this.resetTempMaterial()
+      this.tempMaterial.productItemId = productItem.id
+      this.dialogStatus = 'create'
+      this.materialModifyVisible = true
+      this.$nextTick(() => {
+        this.$refs['materialForm'].clearValidate()
+      })
+    },
+    handleMaterialModify(row) {
+      this.tempMaterial = Object.assign({}, row)
+      this.dialogStatus = 'update'
+      this.materialModifyVisible = true
+      this.$nextTick(() => {
+        this.$refs['materialForm'].clearValidate()
+      })
+    },
+    handleMaterialDelete(row) {
+      MessageBox.confirm('sure to delete?', 'Confirm delete', {
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        type: 'error'
+      }).then(() => {
+        this.tempMaterial = Object.assign({}, row) // copy obj
+        deleteMaterial(this.tempMaterial.id).then(() => {
+          getMaterialByProductItemId(this.productItemTemp.id).then(response => {
+            this.materialList = response.data
+          })
+          this.$message.success('Delete successfully!')
+        })
+      })
+    },
+    createMaterial() {
+      this.$refs['materialForm'].validate((valid) => {
+        if (valid) {
+          const mat = Object.assign({}, this.tempMaterial)
+          mat.createTime = new Date().getTime()
+          mat.updateTime = mat.createTime
+          addMaterial(mat).then(() => {
+            this.materialModifyVisible = false
+            getMaterialByProductItemId(this.productItemTemp.id).then(response => {
+              this.materialList = response.data
+            })
+            this.$message.success('create successfully!')
+          })
+        }
+      })
+    },
+    updateMaterial() {
+      this.$refs['materialForm'].validate((valid) => {
+        if (valid) {
+          const mat = Object.assign({}, this.tempMaterial)
+          mat.updateTime = new Date().getTime()
+          addMaterial(mat).then(() => {
+            this.materialModifyVisible = false
+            getMaterialByProductItemId(this.productItemTemp.id).then(response => {
+              this.materialList = response.data
+            })
+            this.$message.success('update successfully!')
           })
         }
       })

@@ -158,6 +158,11 @@
         highlight-current-row
         style="width: 100%;"
       >
+        <el-table-column label="id" align="center" width="80">
+          <template slot-scope="{row: {id}}">
+            <span>{{ id }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="name" align="center" width="150">
           <template slot-scope="{row: {name}}">
             <span>{{ name }}</span>

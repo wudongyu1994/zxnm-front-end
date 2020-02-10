@@ -71,6 +71,19 @@ export const constantRoutes = [
     }]
   },
   {
+    path: '/step',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: 'Step',
+      component: () => import('@/views/step/index'),
+      meta: {
+        title: 'Step',
+        icon: 'step'
+      }
+    }]
+  },
+  {
     path: '/order',
     component: Layout,
     children: [{

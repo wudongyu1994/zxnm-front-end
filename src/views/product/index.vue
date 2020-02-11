@@ -349,7 +349,7 @@ export default {
         address: this.orderTemp.address,
         phone: this.orderTemp.phone,
         note: this.orderTemp.note,
-        productItemList: this.productListInCart
+        productItemVOList: this.productListInCart
       }
       addOrder(orderVO).then(() => {
         this.productListInCart = []

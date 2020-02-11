@@ -33,6 +33,25 @@
       </el-table-column>
 
     </el-table>
+    <br>
+    <hr>
+
+    <!--模拟物联网提交生产线进行步骤-->
+    <h3 style="margin-left: 80px">模拟物联网设备上传流程信息</h3>
+    <el-form ref="stepDataForm" :rules="stepRules" :model="pi2psTemp" label-position="right" label-width="120px" style="width: 400px; margin-left:50px;">
+      <el-form-item label="productItemId" prop="productItemId">
+        <el-input v-model="pi2psTemp.productItemId" />
+      </el-form-item>
+      <el-form-item label="step" prop="step">
+        <el-select v-model="pi2psTemp.presentStepId" class="filter-item" placeholder="Please select">
+          <el-option v-for="step in listStep" :key="step.id" :label="step.name" :value="step.id" />
+        </el-select>
+      </el-form-item>
+      <el-button class="filter-item" style="margin-left: 120px;" type="primary" icon="el-icon-plus" @click="handleStepSubmit">
+        Submit
+      </el-button>
+      <!--      <el-button @click="test2" />-->
+    </el-form>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="right" label-width="100px" style="width: 400px; margin-left:50px;">
@@ -61,11 +80,21 @@
 
 <script>
 import { getAllStep, addStep, modifyStep, deleteStep } from '../../api/step'
+import { addPi2ps } from '../../api/step'
 import { MessageBox } from 'element-ui'
 
 export default {
   name: 'Step',
   data() {
+    const validateSelect = (rule, value, callback) => {
+      console.log('value ==> ')
+      console.log(value)
+      if (this.pi2psTemp.presentStepId === undefined) {
+        callback(new Error('step is required'))
+      } else {
+        callback()
+      }
+    }
     return {
       textMap: {
         update: 'Edit',
@@ -81,10 +110,21 @@ export default {
         name: '',
         description: ''
       },
+      pi2psTemp: {
+        id: undefined,
+        createTime: new Date(),
+        updateTime: new Date(),
+        productItemId: undefined,
+        presentStepId: undefined
+      },
       dialogFormVisible: false,
       dialogStatus: '',
       rules: {
         name: [{ required: true, message: 'name is required', trigger: 'change' }]
+      },
+      stepRules: {
+        productItemId: [{ required: true, message: 'productItemId is required', trigger: 'blur' }],
+        step: { validator: validateSelect, trigger: 'blur' }
       }
     }
   },
@@ -92,6 +132,9 @@ export default {
     this.getStep()
   },
   methods: {
+    // test2() {
+    //   console.info(this.pi2psTemp.presentStepId)
+    // },
     getStep() {
       this.listLoading = true
       getAllStep().then(response => {
@@ -135,6 +178,18 @@ export default {
           this.$message.success('Delete successfully!')
           this.getStep()
         })
+      })
+    },
+    handleStepSubmit() {
+      this.$refs['stepDataForm'].validate((valid) => {
+        if (valid) {
+          const pi2ps = this.pi2psTemp
+          pi2ps.createTime = new Date().getTime()
+          pi2ps.updateTime = pi2ps.createTime
+          addPi2ps(pi2ps).then(res => {
+            this.$message.success('submit successfully!')
+          })
+        }
       })
     },
     createData() {

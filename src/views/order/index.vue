@@ -149,7 +149,7 @@
     </el-dialog>
 
     <!--产品对话框-->
-    <el-dialog title="ProductItem List" :visible.sync="productItemListVisible">
+    <el-dialog title="ProductItem List" :visible.sync="productItemListVisible" width="70%">
       <el-table
         v-loading="listLoading"
         :data="productItemList"
@@ -168,12 +168,12 @@
             <span>{{ name }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="proNo" align="center" width="100">
+        <el-table-column label="proNo" align="center" width="80">
           <template slot-scope="{row: {proNo}}">
             <span>{{ proNo }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="price" align="center" width="80">
+        <el-table-column label="price" align="center" width="60">
           <template slot-scope="{row: {price}}">
             <span>{{ price }}</span>
           </template>
@@ -183,9 +183,20 @@
             <span>{{ number }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="action" align="center">
+        <el-table-column label="process" align="center">
+          <template slot-scope="{row}">
+            <el-tag v-for="step in row.stepList" :key="step.id" :type="getType(row,step)" style="margin: 5px">{{ step.name }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="percent" align="center" width="80">
+          <template slot-scope="{row: {stepList, presentStepList}}">
+            <span>{{ Math.round(presentStepList.length*100/stepList.length) + '%' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="action" align="center" width="120">
           <template slot-scope="{row}">
             <el-button type="success" @click="showMaterialDialog(row)">material</el-button>
+            <!--            <el-button type="success" @click="showStepDialog(row)">process ?%</el-button>-->
           </template>
         </el-table-column>
       </el-table>
@@ -392,7 +403,12 @@ export default {
       materialListVisible: false,
       materialModifyVisible: false,
       logisticsVisible: false,
+      targetStepListVisible: false,
       dialogStatus: '',
+      rules: {
+        phone: [{ required: true, message: 'phone is required', trigger: 'blur' },
+          { min: 11, max: 11, message: 'phone must be 11 numbers', trigger: 'blur' }]
+      },
       rulesMaterial: {
         name: [{ required: true, message: 'name is required', trigger: 'blur' }],
         corp: [{ required: true, message: 'corp is required', trigger: 'blur' }],
@@ -481,6 +497,11 @@ export default {
           })
         })
       }
+    },
+    getType(row, step) {
+      console.info(row)
+      const flag = row.presentStepList.some(presentStep => presentStep.id === step.id)
+      return flag ? 'success' : 'info'
     },
     handleShowGoods(row) {
       const orderId = row.id

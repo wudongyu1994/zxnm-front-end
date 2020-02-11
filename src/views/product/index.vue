@@ -34,6 +34,10 @@
                 <br>
                 <span>{{ item.description }}</span>
               </div>
+              <div class="div-wdy">
+                <span>工序：</span>
+                <el-tag v-for="step in item.stepList" :key="step.id">{{ step.name }}</el-tag>
+              </div>
               <div>
                 <el-input-number v-model="nums[index]" :min="1" />
                 <el-button type="warning" @click="addPro(item,index)">
@@ -156,6 +160,11 @@
         <el-form-item label="price" prop="price">
           <el-input v-model.number="temp.price" autocomplete="off" />
         </el-form-item>
+        <el-form-item label="step" prop="step">
+          <el-select v-model="listCheck" multiple placeholder="please choose steps">
+            <el-option v-for="step in stepListAll" :key="step.id" :label="step.name" :value="step.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="description" prop="description">
           <el-input v-model="temp.description" type="textarea" :rows="3" />
         </el-form-item>
@@ -175,7 +184,8 @@
 </template>
 
 <script>
-import { getProduct, addProduct, modifyProduct, deleteProduct } from '../../api/product'
+import { getProductVO, addProductVO, modifyProductVO, deleteProduct } from '../../api/product'
+import { getAllStep } from '../../api/step'
 import { MessageBox } from 'element-ui'
 import { mapGetters } from 'vuex'
 import { addOrder } from '../../api/order'
@@ -183,6 +193,15 @@ import { addOrder } from '../../api/order'
 export default {
   name: 'Product',
   data() {
+    const validateSelect = (rule, value, callback) => {
+      console.log('value ==> ')
+      console.log(value)
+      if (this.listCheck === [] || this.listCheck.length === 0) {
+        callback(new Error('step is required'))
+      } else {
+        callback()
+      }
+    }
     return {
       orderTemp: {
         address: '',
@@ -200,6 +219,8 @@ export default {
       tempNum: 0,
       tableKey: 0,
       proListRaw: [],
+      listCheck: [],
+      stepListAll: [],
       productListInCart: [],
       total: 0,
       nums: [],
@@ -211,8 +232,10 @@ export default {
         name: '',
         proNo: '',
         serial: '',
-        price: 0,
-        description: ''
+        price: undefined,
+        description: '',
+        stepList: [],
+        listStepId: []
       },
       cartVisible: false,
       dialogFormVisible: false,
@@ -221,6 +244,7 @@ export default {
         name: { required: true, message: 'name is required', trigger: 'blur' },
         proNo: { required: true, message: 'proNo is required', trigger: 'blur' },
         serial: { required: true, message: 'serial is required', trigger: 'blur' },
+        step: { validator: validateSelect, trigger: 'blur' },
         price: [{ required: true, message: 'price is required', trigger: 'blur' },
           { type: 'number', message: 'price must be number', trigger: 'blur' }]
       },
@@ -248,12 +272,20 @@ export default {
     this.hasRightAdd = this.authorities.some(val => val === '/product/add')
     this.hasRightUpdate = this.authorities.some(val => val === '/product/modify')
     this.hasRightDelete = this.authorities.some(val => val === '/product/delete')
+    this.getStep()
     this.getPro()
   },
   methods: {
+    getStep() {
+      this.listLoading = true
+      getAllStep().then(response => {
+        this.stepListAll = response.data
+        this.listLoading = false
+      })
+    },
     getPro() {
       this.listLoading = true
-      getProduct().then(response => {
+      getProductVO().then(response => {
         this.proListRaw = response.data
         this.total = response.count
         this.nums = [...Array(this.total)].map((x) => 1)
@@ -288,6 +320,7 @@ export default {
       this.temp = Object.assign({}, item)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
+      this.listCheck = this.temp.stepList.map(step => step.id)
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
@@ -297,7 +330,8 @@ export default {
         if (valid) {
           this.temp.createTime = new Date().getTime()
           this.temp.updateTime = this.temp.createTime
-          addProduct(this.temp).then(() => {
+          this.temp.listStepId = this.listCheck
+          addProductVO(this.temp).then(() => {
             this.dialogFormVisible = false
             this.$message.success('Create successfully!')
             this.getPro()
@@ -343,7 +377,8 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           this.temp.updateTime = new Date().getTime()
-          modifyProduct(this.temp).then(() => {
+          this.temp.listStepId = this.listCheck
+          modifyProductVO(this.temp).then(() => {
             this.dialogFormVisible = false
             this.$message.success('Update successfully!')
             this.getPro()

@@ -1,20 +1,20 @@
 import request from '@/utils/request'
 
-export function getProduct(params) {
+export function getProductVO(params) {
   return request({
     url: '/product',
     method: 'get',
     params
   })
 }
-export function addProduct(data) {
+export function addProductVO(data) {
   return request({
     url: '/product',
     method: 'post',
     data
   })
 }
-export function modifyProduct(data) {
+export function modifyProductVO(data) {
   return request({
     url: '/product/' + data.id,
     method: 'patch',

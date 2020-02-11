@@ -7,6 +7,7 @@
     <div class="right-menu">
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
+          {{ principal.name }}
           <el-button type="primary" circle><svg-icon icon-class="user" /></el-button>
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
@@ -42,6 +43,7 @@ export default {
   },
   computed: {
     ...mapGetters([
+      'principal',
       'sidebar',
       'avatar'
     ])

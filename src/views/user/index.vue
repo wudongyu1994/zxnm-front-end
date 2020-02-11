@@ -200,7 +200,7 @@ export default {
         username: [{ required: true, message: 'username is required', trigger: 'change' }],
         password: [
           { required: true, message: 'password is required', trigger: 'blur' },
-          { mix: 4, message: 'password must longer than 3', trigger: 'blur' }]
+          { min: 4, message: 'password must longer than 3', trigger: 'blur' }]
       }
     }
   },

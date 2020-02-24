@@ -71,19 +71,6 @@ export const constantRoutes = [
     }]
   },
   {
-    path: '/step',
-    component: Layout,
-    children: [{
-      path: 'index',
-      name: 'Step',
-      component: () => import('@/views/step/index'),
-      meta: {
-        title: 'Step',
-        icon: 'step'
-      }
-    }]
-  },
-  {
     path: '/order',
     component: Layout,
     children: [{
@@ -93,6 +80,32 @@ export const constantRoutes = [
       meta: {
         title: 'Order',
         icon: 'order'
+      }
+    }]
+  },
+  {
+    path: '/device',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: 'Device',
+      component: () => import('@/views/device/index'),
+      meta: {
+        title: 'Device',
+        icon: 'device'
+      }
+    }]
+  },
+  {
+    path: '/step',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: 'Step',
+      component: () => import('@/views/step/index'),
+      meta: {
+        title: 'Step',
+        icon: 'step'
       }
     }]
   }

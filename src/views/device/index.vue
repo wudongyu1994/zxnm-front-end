@@ -35,14 +35,14 @@
           <div style="width: 100%;">
             <div style="background-color: #409EFF;width: 100%;padding: 10px;">
               <svg-icon class="icon-wdy" icon-class="led" />
-              <span  class="span-wdy">
+              <span class="span-wdy">
                 led status:
                 {{ typeof property.isLedOn === 'undefined'? '--':property.isLedOn?'on':' off' }}
               </span>
             </div>
             <div style="margin: 10px;padding: 5px;">
-              <el-button style="margin: 5px;" type="info" @click="turnOffLed">turn off</el-button>
-              <el-button style="margin: 5px;" type="success" @click="turnOnLed">turn on</el-button>
+              <el-button style="margin: 5px;" type="info" @click="setLed(false)">turn off</el-button>
+              <el-button style="margin: 5px;" type="success" @click="setLed(true)">turn on</el-button>
               <el-button style="margin: 5px;float: right;" round @click="showLedHistory">history</el-button>
             </div>
           </div>
@@ -92,6 +92,9 @@
       </el-table>
 
       <!--图表-->
+      <div class="chart-container">
+        <chart height="100%" width="100%" :data="getData()" />
+      </div>
 
       <div slot="footer" class="dialog-footer">
         <el-button @click="historyDialogVisible = false">
@@ -131,13 +134,15 @@ import {
   getAllDevice,
   getDeviceDevTempHistoryById,
   getDeviceLedHistoryById,
-  getDevicePropertyById
+  getDevicePropertyById, setDeviceLedById
 } from '../../api/device'
+import Chart from './components/LineMarker'
 import { MessageBox } from 'element-ui'
 import { formatTime } from '../../utils'
 
 export default {
   name: 'Device',
+  components: { Chart },
   filters: {
     parseTime(time, format) {
       return formatTime(time, format)
@@ -163,6 +168,7 @@ export default {
         isLedOn: undefined,
         devTemp: undefined
       },
+      chart: null,
       temp: {
         id: undefined,
         createTime: new Date(),
@@ -183,6 +189,18 @@ export default {
     this.getDevice()
   },
   methods: {
+    getData() {
+      const xdata = this.propertyHistory
+        .map(pro => formatTime(pro.time, '{y}-{m}-{d} {h}:{i}:{s}'))
+        .reverse()
+      const ydata = this.propertyHistory
+        .map(pro => this.whichCard === 'led' ? pro.isLedOn : pro.devTemp)
+        .reverse()
+      const data = { xdata: [], ydata: [] }
+      data.xdata = xdata
+      data.ydata = ydata
+      return data
+    },
     getDevice() {
       this.listLoading = true
       getAllDevice().then(response => {
@@ -267,6 +285,11 @@ export default {
           this.$message.success('get history successfully!')
         })
       }
+    },
+    setLed(isTurnOn) {
+      setDeviceLedById(this.selectId, isTurnOn).then(res => {
+        this.$message.success('send command successfully')
+      })
     }
   }
 }
@@ -290,5 +313,10 @@ export default {
     color: white;
     margin: 50px 10px;
     text-align: center;
+  }
+  .chart-container{
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 84px);
   }
 </style>

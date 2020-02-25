@@ -30,6 +30,12 @@ export function getDeviceDevTempHistoryById(id) {
     method: 'get'
   })
 }
+export function setDeviceLedById(id, isTurnOn) {
+  return request({
+    url: '/device/' + id + '/led/' + isTurnOn,
+    method: 'get'
+  })
+}
 export function addDevice(data) {
   return request({
     url: '/device',

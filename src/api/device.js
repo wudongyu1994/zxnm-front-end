@@ -6,12 +6,6 @@ export function getAllDevice() {
     method: 'get'
   })
 }
-export function getDeviceStatusById(id) {
-  return request({
-    url: '/device/' + id + '/status',
-    method: 'get'
-  })
-}
 export function getDevicePropertyById(id) {
   return request({
     url: '/device/' + id + '/property',
@@ -30,10 +24,30 @@ export function getDeviceDevTempHistoryById(id) {
     method: 'get'
   })
 }
-export function setDeviceLedById(id, isTurnOn) {
+export function getDeviceEventById(id) {
   return request({
-    url: '/device/' + id + '/led/' + isTurnOn,
+    url: '/device/' + id + '/event',
     method: 'get'
+  })
+}
+export function getDeviceEventHistoryById(id) {
+  return request({
+    url: '/device/' + id + '/propertyHistory/event',
+    method: 'get'
+  })
+}
+export function clearDeviceEventById(id, params) {
+  return request({
+    url: '/device/' + id + '/eventClear',
+    method: 'get',
+    params
+  })
+}
+export function setDeviceLedById(id, params) {
+  return request({
+    url: '/device/' + id + '/led',
+    method: 'get',
+    params
   })
 }
 export function addDevice(data) {
